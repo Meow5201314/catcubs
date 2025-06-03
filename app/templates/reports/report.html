@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="max-width: 600px;">
+    <div class="card">
+        <div class="card-header">
+            <h3>举报{{ target_type }}</h3>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">您正在举报: <strong>{{ target_title }}</strong></p>
+            
+            <form method="post">
+                {{ form.hidden_tag() }}
+                
+                <div class="form-group">
+                    {{ form.reason_type.label }}
+                    {{ form.reason_type(class="form-control") }}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.reason.label }}
+                    {{ form.reason(class="form-control", rows=4, placeholder="请详细说明举报原因...") }}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.submit(class="btn btn-danger") }}
+                    <a href="javascript:history.back()" class="btn btn-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

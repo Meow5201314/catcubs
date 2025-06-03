@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .admin-comments {
+        background-color: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+    }
+    
+    .admin-comments h2 {
+        color: var(--primary-color);
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid var(--primary-color);
+        font-size: 2.2rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .admin-comments h2 i {
+        margin-right: 15px;
+        color: var(--secondary-color);
+    }
+    
+    .comments-table {
+        width: 100%;
+        border-collapse: collapse;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .comments-table th, .comments-table td {
+        padding: 15px;
+        text-align: left;
+        vertical-align: middle;
+    }
+    
+    .comments-table th {
+        background-color: var(--primary-color);
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+    }
+    
+    .comments-table tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+    
+    .comments-table tr:hover {
+        background-color: #e9ecef;
+    }
+    
+    .comment-content {
+        max-width: 400px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .comment-deleted {
+        color: #6c757d;
+        font-style: italic;
+    }
+    
+    .post-title {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .post-title a {
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+    
+    .post-title a:hover {
+        text-decoration: underline;
+    }
+    
+    .author-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .author-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        margin-right: 10px;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .action-btn {
+        padding: 5px 10px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.85rem;
+    }
+    
+    .btn-view {
+        background-color: #17a2b8;
+        color: white;
+    }
+    
+    .btn-delete {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .action-btn:hover {
+        opacity: 0.8;
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+        gap: 5px;
+    }
+    
+    .pagination a, .pagination .current-page, .pagination .disabled {
+        padding: 10px 18px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        border: 1px solid #dee2e6;
+    }
+    
+    .pagination a {
+        background-color: #f8f9fa;
+        color: var(--primary-color);
+    }
+    
+    .pagination a:hover {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    .pagination .current-page {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    .pagination .disabled {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-comments">
+    <h2><i class="fas fa-comments"></i> 评论管理</h2>
+    
+    {% if comments %}
+    <table class="comments-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>评论内容</th>
+                <th>作者</th>
+                <th>所属帖子</th>
+                <th>发布时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for comment in comments %}
+            <tr>
+                <td>{{ comment.id }}</td>
+                <td class="comment-content">
+                    {% if comment.is_deleted %}
+                        <span class="comment-deleted">该评论已被删除</span>
+                    {% else %}
+                        {{ comment.content }}
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="author-info">
+                        <img src="{{ url_for('static', filename='uploads/avatars/' + comment.author.avatar) }}" alt="{{ comment.author.username }}" class="author-avatar">
+                        <span>{{ comment.author.username }}</span>
+                    </div>
+                </td>
+                <td class="post-title">
+                    <a href="{{ url_for('posts.view', post_id=comment.post.id) }}" target="_blank">{{ comment.post.title }}</a>
+                </td>
+                <td>{{ comment.created_at|datetime }}</td>
+                <td>
+                    <div class="btn-group">
+                        <a href="{{ url_for('posts.view', post_id=comment.post.id) }}" class="action-btn btn-view" target="_blank">
+                            <i class="fas fa-eye"></i> 查看
+                        </a>
+                        {% if not comment.is_deleted %}
+                        <form method="post" action="{{ url_for('admin.delete_comment', comment_id=comment.id) }}" style="display: inline;" onsubmit="return confirm('确定要删除这条评论吗？')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="action-btn btn-delete">
+                                <i class="fas fa-trash"></i> 删除
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- 分页 -->
+    {% if pagination.pages > 1 %}
+    <div class="pagination">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('admin.manage_comments', page=pagination.prev_num) }}">
+                <i class="fas fa-chevron-left"></i> 上一页
+            </a>
+        {% else %}
+            <span class="disabled"><i class="fas fa-chevron-left"></i> 上一页</span>
+        {% endif %}
+        
+        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                {% if page_num == pagination.page %}
+                    <span class="current-page">{{ page_num }}</span>
+                {% else %}
+                    <a href="{{ url_for('admin.manage_comments', page=page_num) }}">{{ page_num }}</a>
+                {% endif %}
+            {% else %}
+                <span class="disabled">...</span>
+            {% endif %}
+        {% endfor %}
+        
+        {% if pagination.has_next %}
+            <a href="{{ url_for('admin.manage_comments', page=pagination.next_num) }}">
+                下一页 <i class="fas fa-chevron-right"></i>
+            </a>
+        {% else %}
+            <span class="disabled">下一页 <i class="fas fa-chevron-right"></i></span>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <div style="text-align: center; padding: 40px; color: #6c757d;">
+        <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 20px;"></i>
+        <h3>暂无评论</h3>
+        <p>当用户发表评论时，它们将显示在这里。</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

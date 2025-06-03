@@ -1,0 +1,572 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+<style>
+    .profile-edit {
+        background-color: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .profile-edit h2 {
+        color: var(--primary-color);
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid var(--primary-color);
+        font-size: 2.2rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .profile-edit h2 i {
+        margin-right: 15px;
+        color: var(--secondary-color);
+    }
+    
+    .profile-form {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 40px;
+    }
+    
+    .avatar-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .current-avatar {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin-bottom: 20px;
+        border: 5px solid var(--primary-color);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .current-avatar:hover {
+        transform: scale(1.05);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .current-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .avatar-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .current-avatar:hover .avatar-overlay {
+        opacity: 1;
+    }
+    
+    .avatar-text {
+        color: white;
+        font-size: 1rem;
+        text-align: center;
+        font-weight: 600;
+    }
+    
+    .avatar-text i {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        display: block;
+    }
+    
+    .hidden-input {
+        display: none;
+    }
+    
+    /* 内联裁剪区域样式 */
+    .crop-section {
+        width: 100%;
+        margin-top: 20px;
+        padding: 20px;
+        border: 2px solid #e9ecef;
+        border-radius: 15px;
+        background-color: #f8f9fa;
+        display: none;
+        animation: slideDown 0.3s ease;
+    }
+    
+    .crop-section.show {
+        display: block;
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .crop-container {
+        width: 100%;
+        max-height: 300px;
+        overflow: hidden;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .crop-container img {
+        max-width: 100%;
+        display: block;
+    }
+    
+    .crop-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+    
+    .crop-actions .btn {
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        font-size: 0.9rem;
+    }
+    
+    .btn-crop-save {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .btn-crop-save:hover {
+        background-color: var(--secondary-color);
+    }
+    
+    .btn-crop-cancel {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-crop-cancel:hover {
+        background-color: #5a6268;
+    }
+    
+    /* 昵称修改信息样式 */
+    .nickname-info {
+        display: flex;
+        align-items: center;
+        margin-top: 8px;
+        padding: 10px;
+        background-color: #e3f2fd;
+        border-radius: 8px;
+        border-left: 4px solid #2196f3;
+    }
+    
+    .nickname-info i {
+        color: #2196f3;
+        margin-right: 8px;
+    }
+    
+    .nickname-info p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #1976d2;
+    }
+    
+    /* 保持原有的其他样式... */
+    .profile-details {
+        padding-top: 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 500;
+        color: var(--secondary-color);
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.25);
+        outline: none;
+    }
+    
+    .form-control:disabled,
+    .form-control[readonly] {
+        background-color: #f8f9fa;
+        cursor: not-allowed;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 40px;
+    }
+    
+    .btn {
+        padding: 12px 25px;
+        border-radius: 30px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        font-size: 1rem;
+    }
+    
+    .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--secondary-color);
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+    
+    .invalid-feedback {
+        display: block;
+        color: #dc3545;
+        font-size: 0.9rem;
+        margin-top: 8px;
+    }
+    
+    .success-message {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+        padding: 12px 15px;
+        border-radius: 5px;
+        margin-top: 10px;
+        font-size: 0.9rem;
+    }
+    
+    @media (max-width: 768px) {
+        .profile-form {
+            grid-template-columns: 1fr;
+        }
+        
+        .avatar-section {
+            margin-bottom: 30px;
+        }
+        
+        .current-avatar {
+            width: 150px;
+            height: 150px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-edit">
+    <h2><i class="fas fa-user-edit"></i> 编辑个人资料</h2>
+    
+    <form method="post" enctype="multipart/form-data" id="profileForm">
+        {{ form.hidden_tag() }}
+        
+        <div class="profile-form">
+            <div class="avatar-section">
+                <!-- 头像显示和点击区域 -->
+                <div class="current-avatar" onclick="selectAvatarFile()">
+                    <img src="{{ url_for('static', filename='uploads/avatars/' + current_user.avatar) }}" alt="{{ current_user.username }}" id="avatar-preview">
+                    <div class="avatar-overlay">
+                        <span class="avatar-text">
+                            <i class="fas fa-camera"></i>
+                            点击更换头像
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- 隐藏的文件输入 -->
+                {{ form.avatar(class="hidden-input", id="avatar-input", onchange="handleAvatarSelect(this)") }}
+                
+                <!-- 显示错误信息 -->
+                {% if form.avatar.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.avatar.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <!-- 内联裁剪区域 -->
+                <div class="crop-section" id="cropSection">
+                    <div class="crop-container">
+                        <img id="cropImage" style="max-width: 100%;">
+                    </div>
+                    <div class="crop-actions">
+                        <button type="button" class="btn btn-crop-cancel" onclick="cancelCrop()">
+                            <i class="fas fa-times"></i> 取消
+                        </button>
+                        <button type="button" class="btn btn-crop-save" onclick="saveCroppedAvatar()">
+                            <i class="fas fa-check"></i> 保存头像
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 成功提示 -->
+                <div id="avatarSuccessMessage" class="success-message" style="display: none;">
+                    头像已更新，点击"保存修改"按钮保存所有更改
+                </div>
+            </div>
+            
+            <div class="profile-details">
+                <div class="form-group">
+                    <label for="{{ form.username.id }}">用户名</label>
+                    {{ form.username(class="form-control", placeholder="请输入用户名") }}
+                    {% if form.username.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.username.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="nickname-info">
+                        <i class="fas fa-info-circle"></i>
+                        <p>用户名一个月只能修改一次。</p>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.email.id }}">电子邮箱</label>
+                    {{ form.email(class="form-control", placeholder="请输入电子邮箱") }}
+                    {% if form.email.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.email.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.title.id }}">个人头衔</label>
+                    {{ form.title(class="form-control", placeholder="请输入个人头衔") }}
+                    {% if form.title.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.title.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-info" style="font-size: 0.85rem; color: #6c757d; margin-top: 8px;">头衔将显示在您的名字旁边，例如：设计师、程序员、学生等</div>
+                </div>
+                
+                <div class="form-actions">
+                    {{ form.submit(class="btn btn-primary") }}
+                    <a href="{{ url_for('main.profile', username=current_user.username) }}" class="btn btn-secondary">取消</a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+<script>
+let cropper = null;
+let croppedBlob = null;
+
+function selectAvatarFile() {
+    document.getElementById('avatar-input').click();
+}
+
+function handleAvatarSelect(input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    // 验证文件类型
+    if (!file.type.startsWith('image/')) {
+        alert('请选择图片文件！');
+        input.value = '';
+        return;
+    }
+    
+    // 验证文件大小 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('文件大小不能超过5MB！');
+        input.value = '';
+        return;
+    }
+    
+    // 读取文件并显示裁剪界面
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        showCropInterface(e.target.result);
+    };
+    reader.readAsDataURL(file);
+}
+
+function showCropInterface(imageSrc) {
+    const cropSection = document.getElementById('cropSection');
+    const cropImage = document.getElementById('cropImage');
+    
+    // 销毁现有的 cropper
+    if (cropper) {
+        cropper.destroy();
+        cropper = null;
+    }
+    
+    // 设置图片源并显示裁剪区域
+    cropImage.src = imageSrc;
+    cropSection.classList.add('show');
+    
+    // 等待图片加载完成后初始化 cropper
+    cropImage.onload = function() {
+        cropper = new Cropper(cropImage, {
+            aspectRatio: 1, // 1:1 比例
+            viewMode: 1,
+            dragMode: 'move',
+            autoCropArea: 0.8,
+            restore: false,
+            guides: true,
+            center: true,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false,
+            minCropBoxWidth: 100,
+            minCropBoxHeight: 100,
+        });
+    };
+}
+
+function cancelCrop() {
+    // 隐藏裁剪区域
+    document.getElementById('cropSection').classList.remove('show');
+    
+    // 销毁 cropper
+    if (cropper) {
+        cropper.destroy();
+        cropper = null;
+    }
+    
+    // 清空文件输入
+    document.getElementById('avatar-input').value = '';
+    
+    // 清空裁剪数据
+    croppedBlob = null;
+    
+    // 隐藏成功消息
+    document.getElementById('avatarSuccessMessage').style.display = 'none';
+}
+
+function saveCroppedAvatar() {
+    if (!cropper) {
+        alert('请先选择图片');
+        return;
+    }
+    
+    // 获取裁剪后的canvas
+    const canvas = cropper.getCroppedCanvas({
+        width: 200,
+        height: 200,
+        imageSmoothingQuality: 'high'
+    });
+    
+    // 转换为blob
+    canvas.toBlob(function(blob) {
+        croppedBlob = blob;
+        
+        // 更新头像预览
+        const croppedDataURL = canvas.toDataURL('image/jpeg', 0.8);
+        document.getElementById('avatar-preview').src = croppedDataURL;
+        
+        // 关键：创建新的文件对象并替换原始文件输入
+        const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+        
+        // 创建新的 DataTransfer 对象来设置文件
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        
+        // 更新文件输入的 files 属性
+        const avatarInput = document.getElementById('avatar-input');
+        avatarInput.files = dataTransfer.files;
+        
+        // 触发 change 事件以确保 Flask-WTF 能够识别文件
+        const changeEvent = new Event('change', { bubbles: true });
+        avatarInput.dispatchEvent(changeEvent);
+        
+        // 隐藏裁剪区域
+        document.getElementById('cropSection').classList.remove('show');
+        
+        // 销毁 cropper
+        cropper.destroy();
+        cropper = null;
+        
+        // 显示成功消息
+        document.getElementById('avatarSuccessMessage').style.display = 'block';
+        
+        // 高亮保存按钮
+        const saveBtn = document.querySelector('.btn-primary');
+        saveBtn.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
+        saveBtn.textContent = '保存修改 (头像已更新)';
+        
+        // 3秒后恢复原样
+        setTimeout(() => {
+            saveBtn.style.background = '';
+            saveBtn.textContent = '保存修改';
+        }, 3000);
+        
+        console.log('头像裁剪完成，文件已更新到表单');
+        
+    }, 'image/jpeg', 0.8);
+}
+
+// 确保表单提交时包含裁剪后的头像
+document.getElementById('profileForm').addEventListener('submit', function(e) {
+    console.log('表单提交中...');
+    const avatarInput = document.getElementById('avatar-input');
+    if (avatarInput.files.length > 0) {
+        console.log('头像文件:', avatarInput.files[0].name, avatarInput.files[0].size + ' bytes');
+    } else {
+        console.log('没有头像文件');
+    }
+});
+
+console.log('个人资料编辑页面JavaScript已加载');
+</script>
+{% endblock %}

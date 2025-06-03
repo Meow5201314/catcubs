@@ -1,0 +1,686 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css">
+<style>
+  /* 自定义 Markdown 样式 */
+  .markdown-body .highlight { background-color: #ffff00; }
+  .markdown-body .footnote { font-size: 0.8em; color: #777; }
+  .markdown-body table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+  .markdown-body table, .markdown-body th, .markdown-body td { border: 1px solid #ddd; padding: 8px; }
+  .markdown-body th { background-color: #f2f2f2; }
+  .markdown-body tr:nth-child(even) { background-color: #f9f9f9; }
+
+  /* 帖子详情页样式 */
+  .post-detail {
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    margin-bottom: 30px;
+    position: relative;
+  }
+
+  .post-header {
+    position: relative;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  .post-header h2 {
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 2rem;
+  }
+
+  .post-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    color: #6c757d;
+    font-size: 0.95rem;
+  }
+
+  .post-meta span {
+    display: flex;
+    align-items: center;
+  }
+
+  .post-meta span i {
+    margin-right: 5px;
+    color: var(--secondary-color);
+  }
+
+  .post-meta a {
+    color: var(--secondary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+  }
+  
+  .post-meta a:hover {
+    color: var(--accent-color);
+  }
+  
+  .post-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    gap: 10px;
+  }
+  
+  .post-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin-bottom: 40px;
+    color: #333;
+  }
+  
+  .post-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    margin: 1rem 0;
+  }
+  
+  /* 评论区样式 */
+  .post-comments {
+    background-color: #f8f9fa;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  }
+  
+  .post-comments h3 {
+    color: var(--secondary-color);
+    margin-top: 0;
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--secondary-color);
+    font-size: 1.5rem;
+  }
+  
+  .comment-form {
+    margin-bottom: 30px;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  }
+  
+  .comments-list {
+    margin-top: 30px;
+  }
+  
+  .comment-item {
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    background-color: white;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease;
+    position: relative;
+  }
+  
+  .comment-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .comment-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+  }
+  
+  .comment-info {
+    display: flex;
+    align-items: center;
+  }
+  
+  .comment-author {
+    font-weight: bold;
+    color: var(--secondary-color);
+  }
+  
+  .comment-author a {
+    color: var(--secondary-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+  
+  .comment-author a:hover {
+    color: var(--accent-color);
+  }
+  
+  .user-title-small {
+    font-size: 0.8em;
+    color: #6c757d;
+    font-weight: normal;
+    margin-left: 5px;
+  }
+  
+  .comment-date {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-left: 10px;
+  }
+  
+  .comment-actions {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .comment-actions button {
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+  }
+  
+  .comment-actions button:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .comment-actions .reply-btn:hover {
+    color: var(--primary-color);
+  }
+  
+  .comment-actions .delete-btn:hover {
+    color: #dc3545;
+  }
+  
+  .comment-content {
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 15px;
+  }
+  
+  .comment-deleted {
+    color: #6c757d;
+    font-style: italic;
+  }
+  
+  .avatar-small {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 15px;
+    border: 3px solid white;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* 回复样式 - 抖音风格 */
+  .comment-replies {
+    margin-top: 15px;
+    margin-left: 0px;
+  }
+
+  .reply-item {
+    display: flex;
+    margin-bottom: 12px;
+    position: relative;
+    align-items: flex-start;
+  }
+
+  .reply-prefix {
+    color: #ccc;
+    font-family: monospace;
+    margin-right: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    width: 20px;
+    flex-shrink: 0;
+    padding-top: 12px;
+  }
+
+  .reply-content-wrapper {
+    flex: 1;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border-left: 3px solid var(--primary-color);
+  }
+
+  .reply-to {
+    color: var(--primary-color);
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+
+  .reply-to a {
+    color: var(--primary-color);
+    text-decoration: none;
+  }
+
+  .reply-to a:hover {
+    text-decoration: underline;
+  }
+  
+  .reply-form {
+    display: none;
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+  }
+  
+  .reply-form.show {
+    display: block;
+  }
+  
+  .reply-form textarea {
+    width: 100%;
+    height: 80px;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    padding: 10px;
+    resize: vertical;
+  }
+  
+  .reply-form .btn-group {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+  }
+
+  /* 模态框样式 */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+  }
+  
+  .modal-dialog {
+    position: relative;
+    width: auto;
+    margin: 50px auto;
+    max-width: 500px;
+  }
+  
+  .modal-content {
+    position: relative;
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+  }
+  
+  .modal-header {
+    padding: 20px;
+    background-color: var(--primary-color);
+    color: white;
+  }
+  
+  .modal-header h5 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: white;
+  }
+  
+  .modal-body {
+    padding: 20px;
+    font-size: 1.1rem;
+  }
+  
+  .modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  
+  .close {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+  }
+  
+  .close:hover {
+    opacity: 1;
+    cursor: pointer;
+  }
+  /* 修复代码块显示问题 */
+  .markdown-body pre {
+    background-color: #f6f8fa;
+    border-radius: 6px;
+    overflow: auto;
+    padding: 16px;
+    margin: 16px 0;
+  } 
+
+  .markdown-body pre code {
+    background-color: transparent;
+    border: 0;
+    display: inline;
+    line-height: inherit;
+    margin: 0;
+    overflow: visible;
+    padding: 0;
+    word-wrap: normal;
+    font-size: 85%;
+  }
+
+  .markdown-body code {
+    background-color: rgba(27,31,35,.05);
+    border-radius: 3px;
+    font-size: 85%;
+    margin: 0;
+    padding: .2em .4em;
+  }
+
+  /* 确保高亮样式正确 */
+  .hljs {
+    display: block;
+    overflow-x: auto;
+    padding: 0.5em;
+    background: #f6f8fa;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="post-detail">
+    <div class="post-header">
+        <h2>{{ post.title }}</h2>
+        <div class="post-meta">
+            <span><i class="fas fa-user"></i> <a href="{{ url_for('main.profile', username=post.author.username) }}">{{ post.author.username }}</a></span>
+            <span><i class="fas fa-calendar-alt"></i> {{ post.created_at|datetime }}</span>
+            <span><i class="fas fa-eye"></i> {{ post.views }} 次浏览</span>
+            <span><i class="fas fa-comment"></i> {{ comments|length }} 条评论</span>
+        </div>
+
+        <div class="post-actions">
+            {% if current_user.is_authenticated and current_user.id == post.user_id %}
+            <a href="{{ url_for('posts.edit', post_id=post.id) }}" class="btn btn-sm btn-secondary"><i class="fas fa-edit"></i> 编辑</a>
+            <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteModal"><i class="fas fa-trash"></i> 删除</button>
+            {% endif %}
+
+            {% if current_user.is_authenticated and current_user.id != post.user_id %}
+            <a href="{{ url_for('reports.report_post', post_id=post.id) }}" class="btn btn-sm btn-warning">
+                <i class="fas fa-flag"></i> 举报
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="post-content markdown-body">
+        {{ post_content|safe }}
+    </div>
+
+    <div class="post-comments">
+        <h3><i class="fas fa-comments"></i> 评论 ({{ comments|length }})</h3>
+
+        {% if current_user.is_authenticated %}
+        <div class="comment-form">
+            <form method="post" action="{{ url_for('posts.add_comment', post_id=post.id) }}">
+                {{ form.hidden_tag() }}
+                <div class="form-group">
+                    {{ form.content.label }}
+                    {{ form.content(class="form-control", placeholder="写下你的想法...") }}
+                    {% if form.content.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.content.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+        {% else %}
+        <div class="comment-login-notice">
+            <p>请<a href="{{ url_for('auth.login', next=request.path) }}">登录</a>后发表评论</p>
+        </div>
+        {% endif %}
+
+        {% if comments %}
+        <div class="comments-list">
+            {% for comment in comments %}
+            <div class="comment-item">
+                <div class="comment-header">
+                    <div class="comment-info">
+                        
+                        <div>
+                            <span class="comment-author">
+                                <a href="{{ url_for('main.profile', username=comment.author.username) }}">{{ comment.author.username }}</a>
+                                {% if comment.author.title %}
+                                <span class="user-title-small">({{ comment.author.title }})</span>
+                                {% endif %}
+                            </span>
+                            <span class="comment-date"><i class="far fa-clock"></i> {{ comment.created_at|datetime }}</span>
+                        </div>
+                    </div>
+
+                    <div class="comment-actions">
+                        {% if current_user.is_authenticated %}
+                        <button type="button" class="reply-btn" onclick="toggleReplyForm({{ comment.id }}, '{{ comment.author.username }}', {{ comment.user_id }})">
+                            <i class="fas fa-reply"></i> 回复
+                        </button>
+                        {% endif %}
+
+                        {% if current_user.is_authenticated and current_user.id != comment.user_id %}
+                        <a href="{{ url_for('reports.report_comment', comment_id=comment.id) }}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-flag"></i> 举报
+                        </a>
+                        {% endif %}
+
+                        {% if current_user.is_authenticated and (current_user.id == comment.user_id or current_user.role in ['admin', 'owner'] or current_user.id == post.user_id) %}
+                        <form method="post" action="{{ url_for('posts.delete_comment', comment_id=comment.id) }}" style="display: inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="delete-btn" onclick="return confirm('确定要删除这条评论吗？')">
+                                <i class="fas fa-trash"></i> 删除
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="comment-content {% if comment.is_deleted %}comment-deleted{% endif %}">
+                    {{ comment.get_display_content() }}
+                </div>
+
+                <!-- 回复表单 -->
+                {% if current_user.is_authenticated %}
+                <div class="reply-form" id="reply-form-{{ comment.id }}">
+                    <form method="post" action="{{ url_for('posts.add_comment', post_id=post.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <textarea name="content" class="form-control" placeholder="" required></textarea>
+                        <input type="hidden" name="parent_id" value="{{ comment.id }}">
+                        <input type="hidden" name="reply_to_user_id" value="{{ comment.user_id }}">
+                        <div class="btn-group">
+                            <button type="submit" class="btn btn-sm btn-primary">发送回复</button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="toggleReplyForm({{ comment.id }})">取消</button>
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
+
+                <!-- 回复列表 - 抖音风格 -->
+                {% set replies = comment.get_replies_with_replies() %}
+                {% if replies %}
+                <div class="comment-replies">
+                    {% for reply in replies %}
+                    <div class="reply-item">
+                        {% if loop.last %}
+                        <div class="reply-prefix">└└──</div>
+                        {% else %}
+                        <div class="reply-prefix">├──</div>
+                        {% endif %}
+
+                        <div class="reply-content-wrapper">
+                            <div class="comment-header">
+                                <div class="comment-info">
+                                    
+                                    <div>
+                                        <span class="comment-author">
+                                            <a href="{{ url_for('main.profile', username=reply.author.username) }}">{{ reply.author.username }}</a>
+                                            {% if reply.author.title %}
+                                            <span class="user-title-small">({{ reply.author.title }})</span>
+                                            {% endif %}
+                                        </span>
+                                        <span class="comment-date"><i class="far fa-clock"></i> {{ reply.created_at|datetime }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="comment-actions">
+                                    {% if current_user.is_authenticated %}
+                                    <button type="button" class="reply-btn" onclick="toggleReplyForm({{ comment.id }}, '{{ reply.author.username }}', {{ reply.user_id }})">
+                                        <i class="fas fa-reply"></i> 回复
+                                    </button>
+                                    {% endif %}
+
+                                    {% if current_user.is_authenticated and current_user.id != reply.user_id %}
+                                    <a href="{{ url_for('reports.report_comment', comment_id=reply.id) }}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-flag"></i> 举报
+                                    </a>
+                                    {% endif %}
+
+                                    {% if current_user.is_authenticated and (current_user.id == reply.user_id or current_user.role in ['admin', 'owner'] or current_user.id == post.user_id) %}
+                                    <form method="post" action="{{ url_for('posts.delete_comment', comment_id=reply.id) }}" style="display: inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="delete-btn" onclick="return confirm('确定要删除这条回复吗？')">
+                                            <i class="fas fa-trash"></i> 删除
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="comment-content {% if reply.is_deleted %}comment-deleted{% endif %}">
+                                {% if reply.reply_to_user %}
+                                <span class="reply-to">回复 <a href="{{ url_for('main.profile', username=reply.reply_to_user.username) }}">{{ reply.reply_to_user.username }}</a>：</span>
+                                {% endif %}
+                                {{ reply.get_display_content() }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-comments">
+            <p>暂无评论，快来发表第一条评论吧！</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+{% if current_user.is_authenticated and current_user.id == post.user_id %}
+<div class="modal" id="deleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认删除</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>您确定要删除这篇帖子吗？此操作不可逆。</p>
+            </div>
+            <div class="modal-footer">
+                <form action="{{ url_for('posts.delete', post_id=post.id) }}" method="post">
+                    {{ form.hidden_tag() }}
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times"></i> 取消</button>
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> 删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.3.0/mermaid.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // 渲染 LaTeX 公式
+    renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false}
+      ],
+      throwOnError: false
+    });
+
+    // 代码高亮
+    document.querySelectorAll('pre code').forEach((block) => {
+      hljs.highlightBlock(block);
+    });
+
+    // 渲染 Mermaid 图表
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'default'
+    });
+  });
+
+  function toggleReplyForm(commentId, replyToUsername, replyToUserId) {
+      const replyForm = document.getElementById('reply-form-' + commentId);
+      if (replyForm.classList.contains('show')) {
+          replyForm.classList.remove('show');
+      } else {
+          // 隐藏其他回复表单
+          document.querySelectorAll('.reply-form.show').forEach(form => {
+              form.classList.remove('show');
+          });
+
+          // 显示当前回复表单
+          replyForm.classList.add('show');
+
+          // 更新占位符文本
+          const textarea = replyForm.querySelector('textarea');
+          if (replyToUsername) {
+              textarea.placeholder = `回复 ${replyToUsername}...`;
+          }
+
+          // 更新隐藏字段
+          if (replyToUserId) {
+              const replyToUserIdField = replyForm.querySelector('input[name="reply_to_user_id"]');
+              if (replyToUserIdField) {
+                  replyToUserIdField.value = replyToUserId;
+              }
+          }
+
+          // 聚焦到文本区域
+          textarea.focus();
+      }
+  }
+</script>
+{% endblock %}

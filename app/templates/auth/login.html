@@ -1,0 +1,762 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* 页面特有的背景层 */
+    .auth-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+            radial-gradient(circle at 25% 25%, rgba(102, 126, 234, 0.2) 0%, transparent 50%),
+            radial-gradient(circle at 75% 75%, rgba(118, 75, 162, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 50% 10%, rgba(240, 147, 251, 0.1) 0%, transparent 50%);
+        animation: authBackgroundFloat 20s ease-in-out infinite;
+        z-index: -1;
+    }
+
+    @keyframes authBackgroundFloat {
+        0%, 100% { 
+            transform: scale(1) rotate(0deg);
+            opacity: 0.6;
+        }
+        50% { 
+            transform: scale(1.1) rotate(180deg);
+            opacity: 0.8;
+        }
+    }
+    
+    .auth-form {
+        max-width: 450px;
+        width: 100%;
+        padding: 50px 40px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(25px);
+        border-radius: 25px;
+        box-shadow: 
+            0 25px 80px rgba(0, 0, 0, 0.15),
+            0 0 0 1px rgba(255, 255, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .auth-form::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #667eea);
+        background-size: 200% 100%;
+        animation: gradientSlide 3s ease-in-out infinite;
+    }
+
+    @keyframes gradientSlide {
+        0%, 100% { background-position: 0% 0%; }
+        50% { background-position: 100% 0%; }
+    }
+
+    /* 毛玻璃边框效果 */
+    .auth-form::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, 
+            rgba(255, 255, 255, 0.1), 
+            transparent, 
+            rgba(255, 255, 255, 0.05), 
+            transparent);
+        border-radius: 25px;
+        pointer-events: none;
+    }
+    
+    /* 头像区域 */
+    .avatar-section {
+        text-align: center;
+        margin-bottom: 40px;
+        position: relative;
+    }
+    
+    .login-avatar {
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.15),
+            0 0 0 2px rgba(102, 126, 234, 0.1);
+        margin-bottom: 20px;
+        transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        position: relative;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    }
+
+    /* 头像周围的光环效果 */
+    .login-avatar::before {
+        content: '';
+        position: absolute;
+        top: -10px;
+        left: -10px;
+        right: -10px;
+        bottom: -10px;
+        border-radius: 50%;
+        background: conic-gradient(
+            from 0deg,
+            transparent,
+            rgba(102, 126, 234, 0.3),
+            transparent,
+            rgba(118, 75, 162, 0.3),
+            transparent
+        );
+        animation: avatarHalo 4s linear infinite;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+    }
+    
+    .login-avatar.user-found {
+        border-color: rgba(102, 126, 234, 0.8);
+        box-shadow: 
+            0 25px 50px rgba(102, 126, 234, 0.3),
+            0 0 0 3px rgba(102, 126, 234, 0.2);
+        transform: scale(1.05);
+    }
+
+    .login-avatar.user-found::before {
+        opacity: 1;
+    }
+
+    .login-avatar.loading {
+        animation: avatarSpin 1s linear infinite;
+    }
+
+    @keyframes avatarHalo {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @keyframes avatarSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .welcome-text {
+        color: #666;
+        font-size: 1rem;
+        margin-bottom: 25px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+    }
+
+    .user-welcome {
+        color: #667eea;
+        font-weight: 600;
+        transform: scale(1.05);
+    }
+    
+    .auth-form h2 {
+        text-align: center;
+        margin-bottom: 45px;
+        color: #2c3e50;
+        font-size: 2.5rem;
+        font-weight: 800;
+        position: relative;
+        background: linear-gradient(135deg, #2c3e50, #34495e);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow: none;
+    }
+
+    .auth-form h2::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 3px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        border-radius: 2px;
+    }
+    
+    .form-group {
+        margin-bottom: 30px;
+        position: relative;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 600;
+        color: #555;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+    }
+
+    .form-group.focused label {
+        color: #667eea;
+        transform: translateY(-2px);
+    }
+    
+    .input-group {
+        position: relative;
+    }
+    
+    .input-icon {
+        position: absolute;
+        left: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+        z-index: 2;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+    }
+
+    .input-group.focused .input-icon {
+        color: #667eea;
+        transform: translateY(-50%) scale(1.1);
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 18px 18px 18px 50px;
+        border: 2px solid rgba(233, 236, 239, 0.8);
+        border-radius: 15px;
+        font-size: 1rem;
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        background: rgba(248, 249, 250, 0.8);
+        backdrop-filter: blur(10px);
+        box-shadow: 
+            inset 0 2px 4px rgba(0, 0, 0, 0.02),
+            0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 
+            0 0 0 4px rgba(102, 126, 234, 0.1),
+            0 8px 25px rgba(102, 126, 234, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .form-control::placeholder {
+        color: #adb5bd;
+        font-weight: 400;
+    }
+    
+    .checkbox {
+        display: flex;
+        align-items: center;
+        margin-bottom: 35px;
+        padding: 15px;
+        background: rgba(248, 249, 250, 0.5);
+        border-radius: 12px;
+        border: 1px solid rgba(233, 236, 239, 0.6);
+        transition: all 0.3s ease;
+    }
+
+    .checkbox:hover {
+        background: rgba(102, 126, 234, 0.05);
+        border-color: rgba(102, 126, 234, 0.2);
+    }
+    
+    .form-check-input {
+        margin-right: 12px;
+        transform: scale(1.3);
+        accent-color: #667eea;
+    }
+    
+    .form-check-label {
+        color: #666;
+        cursor: pointer;
+        margin-bottom: 0 !important;
+        font-weight: 500;
+    }
+    
+    .btn {
+        width: 100%;
+        padding: 18px;
+        font-size: 1.2rem;
+        font-weight: 700;
+        border-radius: 15px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        position: relative;
+        overflow: hidden;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.7;
+        transform: none;
+        cursor: not-allowed;
+        background: linear-gradient(135deg, #adb5bd 0%, #868e96 100%);
+    }
+    
+    .btn-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.6s ease;
+    }
+    
+    .btn-primary:hover::before {
+        left: 100%;
+    }
+    
+    .auth-footer {
+        text-align: center;
+        margin-top: 40px;
+        padding-top: 25px;
+        border-top: 2px solid rgba(233, 236, 239, 0.6);
+        position: relative;
+    }
+
+    .auth-footer::before {
+        content: '';
+        position: absolute;
+        top: -1px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 2px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+    
+    .auth-footer a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        padding: 5px 10px;
+        border-radius: 8px;
+    }
+    
+    .auth-footer a:hover {
+        color: #764ba2;
+        background: rgba(102, 126, 234, 0.1);
+        transform: translateY(-1px);
+    }
+    
+    .invalid-feedback {
+        display: block;
+        color: #dc3545;
+        font-size: 0.9rem;
+        margin-top: 8px;
+        animation: shake 0.5s ease-in-out;
+        font-weight: 500;
+        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-8px); }
+        75% { transform: translateX(8px); }
+    }
+    
+    .login-features {
+        margin-top: 25px;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        padding: 20px 0;
+        border-top: 2px solid rgba(233, 236, 239, 0.6);
+        border-bottom: 2px solid rgba(233, 236, 239, 0.6);
+        background: rgba(248, 249, 250, 0.5);
+        border-radius: 12px;
+        margin-bottom: 10px;
+    }
+    
+    .feature-item {
+        text-align: center;
+        color: #666;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        padding: 10px;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+
+    .feature-item:hover {
+        color: #667eea;
+        transform: translateY(-3px);
+        background: rgba(102, 126, 234, 0.1);
+    }
+    
+    .feature-item i {
+        display: block;
+        font-size: 1.4rem;
+        color: #667eea;
+        margin-bottom: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .feature-item:hover i {
+        transform: scale(1.2);
+        color: #764ba2;
+    }
+
+    /* 用户状态指示器 */
+    .user-status-indicator {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        color: white;
+        font-weight: bold;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        animation: statusPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes statusPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+
+    .status-user { 
+        background: linear-gradient(135deg, #28a745, #20c997);
+    }
+    .status-admin { 
+        background: linear-gradient(135deg, #ffc107, #fd7e14);
+        color: #333; 
+    }
+    .status-owner { 
+        background: linear-gradient(135deg, #dc3545, #e83e8c);
+    }
+    
+    @media (max-width: 768px) {
+        .auth-container {
+            padding: 15px;
+        }
+        
+        .auth-form {
+            padding: 40px 25px;
+            border-radius: 20px;
+        }
+        
+        .login-avatar {
+            width: 110px;
+            height: 110px;
+        }
+        
+        .auth-form h2 {
+            font-size: 2.2rem;
+        }
+        
+        .login-features {
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            text-align: left;
+            padding: 15px;
+        }
+        
+        .feature-item i {
+            margin-bottom: 0;
+            font-size: 1.2rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .auth-form {
+            padding: 30px 20px;
+        }
+        
+        .login-avatar {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .auth-form h2 {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-form">
+        <!-- 头像区域 -->
+        <div class="avatar-section">
+            <div style="position: relative; display: inline-block;">
+                <img src="{{ url_for('static', filename='uploads/avatars/default_avatar.jpg') }}" 
+                     alt="用户头像" 
+                     class="login-avatar" 
+                     id="user-avatar">
+                <div class="user-status-indicator" id="user-status" style="display: none;">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+            <div class="welcome-text" id="welcome-text">欢迎回到喵崽社区</div>
+        </div>
+        
+        <h2>用户登录</h2>
+        
+        <form method="post" id="login-form">
+            {{ form.hidden_tag() }}
+            
+            <div class="form-group" id="username-group">
+                {{ form.username.label }}
+                <div class="input-group">
+                    <div class="input-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    {{ form.username(class="form-control", placeholder="请输入用户名或邮箱", id="username-input") }}
+                </div>
+                {% if form.username.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.username.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group" id="password-group">
+                {{ form.password.label }}
+                <div class="input-group">
+                    <div class="input-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    {{ form.password(class="form-control", placeholder="请输入密码") }}
+                </div>
+                {% if form.password.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.password.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group checkbox">
+                {{ form.remember_me(class="form-check-input") }}
+                {{ form.remember_me.label(class="form-check-label") }}
+            </div>
+            
+            <div class="form-group">
+                {{ form.submit(class="btn btn-primary", id="submit-btn") }}
+            </div>
+        </form>
+        
+        <!-- 登录特色功能展示 -->
+        <div class="login-features">
+            <div class="feature-item">
+                <i class="fas fa-shield-alt"></i>
+                <span>安全登录</span>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-comments"></i>
+                <span>即时交流</span>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-bell"></i>
+                <span>消息通知</span>
+            </div>
+        </div>
+        
+        <div class="auth-footer">
+            <p>还没有账号? <a href="{{ url_for('auth.register') }}">立即注册</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- JavaScript代码保持不变 -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const usernameInput = document.getElementById('username-input');
+    const userAvatar = document.getElementById('user-avatar');
+    const welcomeText = document.getElementById('welcome-text');
+    const userStatus = document.getElementById('user-status');
+    const submitBtn = document.getElementById('submit-btn');
+    const usernameGroup = document.getElementById('username-group');
+    const passwordGroup = document.getElementById('password-group');
+    
+    let searchTimeout;
+    let currentUser = null;
+    
+    // 输入框焦点效果
+    document.querySelectorAll('.form-control').forEach(input => {
+        input.addEventListener('focus', function() {
+            this.closest('.form-group').classList.add('focused');
+            this.closest('.input-group').classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            this.closest('.form-group').classList.remove('focused');
+            this.closest('.input-group').classList.remove('focused');
+        });
+    });
+    
+    // 用户名输入监听
+    usernameInput.addEventListener('input', function() {
+        const username = this.value.trim();
+        
+        // 清除之前的定时器
+        clearTimeout(searchTimeout);
+        
+        if (username.length < 2) {
+            resetAvatar();
+            return;
+        }
+        
+        // 设置加载状态
+        userAvatar.classList.add('loading');
+        userStatus.style.display = 'none';
+        
+        // 延迟搜索，避免频繁请求
+        searchTimeout = setTimeout(() => {
+            searchUser(username);
+        }, 500);
+    });
+    
+    // 搜索用户
+    async function searchUser(username) {
+        try {
+            const response = await fetch(`/api/user/search?username=${encodeURIComponent(username)}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.found) {
+                    updateAvatar(data.user);
+                } else {
+                    resetAvatar();
+                }
+            } else {
+                resetAvatar();
+            }
+        } catch (error) {
+            console.error('搜索用户失败:', error);
+            resetAvatar();
+        } finally {
+            userAvatar.classList.remove('loading');
+        }
+    }
+    
+    // 更新头像
+    function updateAvatar(user) {
+        currentUser = user;
+        userAvatar.src = `/static/uploads/avatars/${user.avatar}`;
+        userAvatar.classList.add('user-found');
+        
+        // 更新欢迎文字
+        welcomeText.textContent = `欢迎回来，${user.username}！`;
+        welcomeText.classList.add('user-welcome');
+        
+        // 显示用户状态
+        userStatus.style.display = 'flex';
+        userStatus.className = 'user-status-indicator';
+        
+        if (user.role === 'owner') {
+            userStatus.classList.add('status-owner');
+            userStatus.innerHTML = '<i class="fas fa-crown"></i>';
+            userStatus.title = '站长';
+        } else if (user.role === 'admin') {
+            userStatus.classList.add('status-admin');
+            userStatus.innerHTML = '<i class="fas fa-shield-alt"></i>';
+            userStatus.title = '管理员';
+        } else {
+            userStatus.classList.add('status-user');
+            userStatus.innerHTML = '<i class="fas fa-user"></i>';
+            userStatus.title = '用户';
+        }
+    }
+    
+    // 重置头像
+    function resetAvatar() {
+        currentUser = null;
+        userAvatar.src = '/static/uploads/avatars/default_avatar.jpg';
+        userAvatar.classList.remove('user-found');
+        
+        welcomeText.textContent = '欢迎回到喵崽社区';
+        welcomeText.classList.remove('user-welcome');
+        
+        userStatus.style.display = 'none';
+    }
+    
+    // 表单提交处理
+    document.getElementById('login-form').addEventListener('submit', function(e) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 登录中...';
+        
+        // 如果5秒后还没有响应，重新启用按钮
+        setTimeout(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '登录';
+        }, 5000);
+    });
+    
+    // 回车键登录
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && document.activeElement.closest('.auth-form')) {
+            e.preventDefault();
+            document.getElementById('login-form').submit();
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .admin-posts {
+        background-color: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+    }
+    
+    .admin-posts h2 {
+        color: var(--primary-color);
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid var(--primary-color);
+        font-size: 2.2rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .admin-posts h2 i {
+        margin-right: 15px;
+        color: var(--secondary-color);
+    }
+    
+    .posts-table {
+        width: 100%;
+        border-collapse: collapse;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .posts-table th, .posts-table td {
+        padding: 15px;
+        text-align: left;
+        vertical-align: middle;
+    }
+    
+    .posts-table th {
+        background-color: var(--primary-color);
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+    }
+    
+    .posts-table tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+    
+    .posts-table tr:hover {
+        background-color: #e9ecef;
+    }
+    
+    .post-title {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .post-title a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .post-title a:hover {
+        text-decoration: underline;
+    }
+    
+    .author-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .author-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        margin-right: 10px;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .action-btn {
+        padding: 5px 10px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.85rem;
+    }
+    
+    .btn-view {
+        background-color: #17a2b8;
+        color: white;
+    }
+    
+    .btn-delete {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .action-btn:hover {
+        opacity: 0.8;
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+        gap: 5px;
+    }
+    
+    .pagination a, .pagination .current-page, .pagination .disabled {
+        padding: 10px 18px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        border: 1px solid #dee2e6;
+    }
+    
+    .pagination a {
+        background-color: #f8f9fa;
+        color: var(--primary-color);
+    }
+    
+    .pagination a:hover {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    .pagination .current-page {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    .pagination .disabled {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-posts">
+    <h2><i class="fas fa-file-alt"></i> 帖子管理</h2>
+    
+    <table class="posts-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>标题</th>
+                <th>作者</th>
+                <th>发布时间</th>
+                <th>浏览数</th>
+                <th>评论数</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for post in posts %}
+            <tr>
+                <td>{{ post.id }}</td>
+                <td class="post-title">
+                    <a href="{{ url_for('posts.view', post_id=post.id) }}" target="_blank">{{ post.title }}</a>
+                </td>
+                <td>
+                    <div class="author-info">
+                        <img src="{{ url_for('static', filename='uploads/avatars/' + post.author.avatar) }}" alt="{{ post.author.username }}" class="author-avatar">
+                        <span>{{ post.author.username }}</span>
+                    </div>
+                </td>
+                <td>{{ post.created_at|datetime }}</td>
+                <td>{{ post.views }}</td>
+                <td>{{ post.comments.count() }}</td>
+                <td>
+                    <div class="btn-group">
+                        <a href="{{ url_for('posts.view', post_id=post.id) }}" class="action-btn btn-view" target="_blank">
+                            <i class="fas fa-eye"></i> 查看
+                        </a>
+                        <form method="post" action="{{ url_for('admin.delete_post', post_id=post.id) }}" style="display: inline;" onsubmit="return confirm('确定要删除这篇帖子吗？此操作不可撤销！')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="action-btn btn-delete">
+                                <i class="fas fa-trash"></i> 删除
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- 分页 -->
+    {% if pagination.pages > 1 %}
+    <div class="pagination">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('admin.manage_posts', page=pagination.prev_num) }}">
+                <i class="fas fa-chevron-left"></i> 上一页
+            </a>
+        {% else %}
+            <span class="disabled"><i class="fas fa-chevron-left"></i> 上一页</span>
+        {% endif %}
+        
+        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                {% if page_num == pagination.page %}
+                    <span class="current-page">{{ page_num }}</span>
+                {% else %}
+                    <a href="{{ url_for('admin.manage_posts', page=page_num) }}">{{ page_num }}</a>
+                {% endif %}
+            {% else %}
+                <span class="disabled">...</span>
+            {% endif %}
+        {% endfor %}
+        
+        {% if pagination.has_next %}
+            <a href="{{ url_for('admin.manage_posts', page=pagination.next_num) }}">
+                下一页 <i class="fas fa-chevron-right"></i>
+            </a>
+        {% else %}
+            <span class="disabled">下一页 <i class="fas fa-chevron-right"></i></span>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

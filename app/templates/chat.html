@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        display: grid;
+        grid-template-columns: 1fr;
+        background-color: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        overflow: hidden;
+        height: 70vh;
+    }
+    
+    .chat-header {
+        padding: 20px;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .chat-with-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 15px;
+        border: 3px solid white;
+    }
+    
+    .chat-with-info h3 {
+        margin: 0 0 5px 0;
+        font-size: 1.2rem;
+    }
+    
+    .chat-with-status {
+        font-size: 0.85rem;
+        opacity: 0.9;
+    }
+    
+    .chat-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        max-height: calc(70vh - 180px);
+    }
+    
+    .message {
+        max-width: 70%;
+        padding: 12px 15px;
+        border-radius: 15px;
+        position: relative;
+        word-wrap: break-word;
+    }
+    
+    .message-time {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 5px;
+        text-align: right;
+    }
+    
+    .message-received {
+        align-self: flex-start;
+        background-color: #f8f9fa;
+        border-bottom-left-radius: 5px;
+    }
+    
+    .message-sent {
+        align-self: flex-end;
+        background-color: var(--primary-color);
+        color: white;
+        border-bottom-right-radius: 5px;
+    }
+    
+    .message-sent .message-time {
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .chat-input {
+        padding: 20px;
+        border-top: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+    }
+    
+    .input-group {
+        display: flex;
+        gap: 15px;
+    }
+    
+    .message-input {
+        flex: 1;
+        padding: 12px 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 30px;
+        font-size: 1rem;
+        resize: none;
+        min-height: 45px;
+        max-height: 100px;
+    }
+    
+    .message-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+    }
+    
+    .send-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: none;
+        background-color: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .send-btn:hover {
+        background-color: var(--secondary-color);
+        transform: scale(1.05);
+    }
+    
+    .send-btn:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .no-messages {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #6c757d;
+    }
+    
+    .no-messages i {
+        font-size: 5rem;
+        color: #dee2e6;
+        margin-bottom: 20px;
+    }
+    
+    .back-btn {
+        margin-right: auto;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .back-btn:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <a href="{{ url_for('main.messages') }}" class="back-btn">
+            <i class="fas fa-arrow-left"></i> 返回
+        </a>
+        <img src="{{ url_for('static', filename='uploads/avatars/' + user.avatar) }}" alt="{{ user.username }}" class="chat-with-avatar">
+        <div class="chat-with-info">
+            <h3>{{ user.username }}</h3>
+            <div class="chat-with-status">
+                {% if user.title %}{{ user.title }}{% else %}用户{% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="chat-messages" id="chat-messages">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="message {% if message.sender_id == current_user.id %}message-sent{% else %}message-received{% endif %}">
+                <div class="message-content">{{ message.content }}</div>
+                <div class="message-time">{{ message.created_at|datetime }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="no-messages">
+            <i class="far fa-comments"></i>
+            <h3>开始对话</h3>
+            <p>发送第一条消息给 {{ user.username }}</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="chat-input">
+        <form method="post" action="{{ url_for('main.send_message') }}">
+            {{ form.hidden_tag() }}
+            {{ form.recipient_id }}
+            <div class="input-group">
+                {{ form.content(class="message-input", placeholder="输入消息...", rows="1") }}
+                <button type="submit" class="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatMessages = document.getElementById('chat-messages');
+    const messageInput = document.querySelector('.message-input');
+    const sendBtn = document.querySelector('.send-btn');
+    
+    // 滚动到底部
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // 自动调整输入框高度
+    messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+    });
+    
+    // 回车发送消息
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (this.value.trim()) {
+                this.closest('form').submit();
+            }
+        }
+    });
+    
+    // 禁用空消息发送
+    messageInput.addEventListener('input', function() {
+        sendBtn.disabled = !this.value.trim();
+    });
+    
+    // 初始状态
+    sendBtn.disabled = !messageInput.value.trim();
+});
+</script>
+{% endblock %}

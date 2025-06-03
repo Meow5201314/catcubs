@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .messages-container {
+        background-color: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .messages-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid var(--primary-color);
+    }
+    
+    .messages-header h2 {
+        margin: 0;
+        color: var(--primary-color);
+        font-size: 2.2rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .messages-header h2 i {
+        margin-right: 15px;
+        color: var(--secondary-color);
+    }
+    
+    .conversations-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .conversation-item {
+        padding: 20px;
+        border-radius: 10px;
+        background-color: #f8f9fa;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: inherit;
+        position: relative;
+    }
+    
+    .conversation-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        color: inherit;
+        text-decoration: none;
+    }
+    
+    .conversation-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 20px;
+        border: 3px solid white;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .conversation-info {
+        flex: 1;
+    }
+    
+    .conversation-name {
+        font-weight: 600;
+        color: var(--primary-color);
+        margin: 0 0 5px 0;
+        font-size: 1.2rem;
+    }
+    
+    .conversation-last-message {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin: 0;
+        line-height: 1.4;
+    }
+    
+    .conversation-time {
+        font-size: 0.85rem;
+        color: #6c757d;
+        text-align: right;
+    }
+    
+    .unread-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background-color: var(--primary-color);
+        color: white;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .no-conversations {
+        padding: 40px 20px;
+        text-align: center;
+        color: #6c757d;
+    }
+    
+    .no-conversations i {
+        font-size: 5rem;
+        color: #dee2e6;
+        margin-bottom: 20px;
+    }
+    
+    .no-conversations h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="messages-container">
+    <div class="messages-header">
+        <h2><i class="fas fa-envelope"></i> 我的私信</h2>
+    </div>
+    
+    {% if conversations %}
+    <div class="conversations-list">
+        {% for conversation in conversations %}
+        <a href="{{ url_for('main.chat_with_user', user_id=conversation.user.id) }}" class="conversation-item">
+            <img src="{{ url_for('static', filename='uploads/avatars/' + conversation.user.avatar) }}" 
+                 alt="{{ conversation.user.username }}" 
+                 class="conversation-avatar">
+            <div class="conversation-info">
+                <h4 class="conversation-name">{{ conversation.user.username }}</h4>
+                <p class="conversation-last-message">
+                    {% if conversation.last_message %}
+                        {% if conversation.last_message.sender_id == current_user.id %}
+                        <span style="color: var(--secondary-color);">您: </span>
+                        {% endif %}
+                        {{ conversation.last_message.content[:50] }}{% if conversation.last_message.content|length > 50 %}...{% endif %}
+                    {% else %}
+                        暂无消息
+                    {% endif %}
+                </p>
+            </div>
+            <div class="conversation-time">
+                {% if conversation.last_message %}
+                {{ conversation.last_message.created_at|datetime }}
+                {% endif %}
+            </div>
+            {% if conversation.unread_count > 0 %}
+            <div class="unread-badge">{{ conversation.unread_count }}</div>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="no-conversations">
+        <i class="far fa-comment-dots"></i>
+        <h3>暂无对话</h3>
+        <p>当您收到私信或发送消息时，对话将显示在这里。</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

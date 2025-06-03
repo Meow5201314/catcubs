@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css">
+<style>
+  /* 自定义 Markdown 样式 */
+  .markdown-body .highlight { background-color: #ffff00; }  /* 高亮 */
+  .markdown-body .footnote { font-size: 0.8em; color: #777; }
+  .markdown-body table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+  .markdown-body table, .markdown-body th, .markdown-body td { border: 1px solid #ddd; padding: 8px; }
+  .markdown-body th { background-color: #f2f2f2; }
+  .markdown-body tr:nth-child(even) { background-color: #f9f9f9; }
+  
+  /* 帖子表单样式 */
+  .post-form {
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    margin-bottom: 30px;
+  }
+  
+  .post-form h2 {
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary-color);
+    font-size: 1.8rem;
+  }
+  
+  /* 编辑器工具栏 */
+  .editor-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+    border: 1px solid #e0e0e0;
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+  
+  .editor-toolbar button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    background-color: white;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .editor-toolbar button:hover {
+    background-color: var(--secondary-color);
+    color: white;
+    border-color: var(--secondary-color);
+  }
+  
+  .editor-toolbar button i {
+    margin-right: 5px;
+  }
+  
+  /* 调整文本区域 */
+  #content {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    min-height: 300px;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    line-height: 1.6;
+  }
+  
+  /* Markdown 预览 */
+  .markdown-preview {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    background-color: white;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  }
+  
+  .markdown-preview h3 {
+    color: var(--secondary-color);
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--secondary-color);
+  }
+  
+  #preview {
+    min-height: 100px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+  }
+  
+  /* 提交按钮 */
+  .form-submit {
+    margin-top: 25px;
+    display: flex;
+    gap: 10px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="post-form">
+    <h2><i class="fas fa-edit"></i> 发布新帖子</h2>
+    <form method="post">
+        {{ form.hidden_tag() }}
+        
+        <div class="form-group">
+            {{ form.title.label }}
+            {{ form.title(class="form-control", placeholder="请输入帖子标题") }}
+            {% if form.title.errors %}
+                <div class="invalid-feedback">
+                    {% for error in form.title.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.content.label }}
+            <div class="editor-toolbar">
+                <button type="button" class="btn-sm btn-outline-secondary" id="btn-upload-image">
+                    <i class="fas fa-image"></i> 插入图片
+                </button>
+                <button type="button" class="btn-sm btn-outline-secondary" id="btn-h2">
+                    <i class="fas fa-heading"></i> 标题
+                </button>
+                <button type="button" class="btn-sm btn-outline-secondary" id="btn-bold">
+                    <i class="fas fa-bold"></i> 粗体
+                </button>
+                <button type="button" class="btn-sm btn-outline-secondary" id="btn-italic">
+                    <i class="fas fa-italic"></i> 斜体
+                </button>
+                <button type="button" class="btn-sm btn-outline-secondary" id="btn-list">
+                    <i class="fas fa-list-ul"></i> 列表
+                </button>
+                <button type="button" class="btn-sm btn-outline-secondary" id="btn-link">
+                    <i class="fas fa-link"></i> 链接
+                </button>
+                <button type="button" class="btn-sm btn-outline-secondary" id="btn-code">
+                    <i class="fas fa-code"></i> 代码
+                </button>
+                <input type="file" id="image-upload" style="display: none" accept="image/*">
+            </div>
+            {{ form.content(class="form-control", rows=12, placeholder="在这里开始编写内容...") }}
+            {% if form.content.errors %}
+                <div class="invalid-feedback">
+                    {% for error in form.content.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group checkbox">
+            {{ form.is_markdown(class="form-check-input") }}
+            {{ form.is_markdown.label(class="form-check-label") }}
+            <small class="form-text text-muted">启用 Markdown 格式可以让你的帖子更加丰富多彩</small>
+        </div>
+        
+        <div class="markdown-preview" style="display: none;">
+            <h3><i class="fas fa-eye"></i> 预览</h3>
+            <div id="preview" class="markdown-body"></div>
+        </div>
+        
+        <div class="form-group form-submit">
+            {{ form.submit(class="btn btn-primary") }}
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.3.0/mermaid.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const contentEl = document.getElementById('content');
+    const previewEl = document.getElementById('preview');
+    const markdownCheckbox = document.getElementById('is_markdown');
+    
+    // 配置 marked 解析器
+    marked.setOptions({
+        highlight: function(code, lang) {
+            if (lang && hljs.getLanguage(lang)) {
+                return hljs.highlight(lang, code).value;
+            }
+            return hljs.highlightAuto(code).value;
+        },
+        breaks: true,
+        gfm: true
+    });
+    
+    function updatePreview() {
+        if (markdownCheckbox.checked) {
+            // 渲染 Markdown
+            previewEl.innerHTML = marked.parse(contentEl.value);
+            
+            // 渲染 LaTeX 公式
+            renderMathInElement(previewEl, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ],
+                throwOnError: false
+            });
+            
+            // 渲染代码高亮
+            document.querySelectorAll('#preview pre code').forEach((block) => {
+                hljs.highlightBlock(block);
+            });
+            
+            // 渲染 Mermaid 图表
+            mermaid.init(undefined, document.querySelectorAll('#preview .mermaid'));
+            
+            document.querySelector('.markdown-preview').style.display = 'block';
+        } else {
+            document.querySelector('.markdown-preview').style.display = 'none';
+        }
+    }
+    
+    contentEl.addEventListener('input', updatePreview);
+    markdownCheckbox.addEventListener('change', updatePreview);
+    
+    // 初始预览
+    updatePreview();
+	if (!markdownCheckbox.checked && '{{ request.endpoint }}' === 'posts.create') {
+		markdownCheckbox.checked = true;
+		updatePreview();
+	}
+
+    // 图片上传处理
+    document.getElementById('btn-upload-image').addEventListener('click', function() {
+        document.getElementById('image-upload').click();
+    });
+
+    document.getElementById('image-upload').addEventListener('change', function() {
+        const file = this.files[0];
+        if (!file) return;
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        fetch('/upload/image', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 在光标位置插入图片链接
+                const textarea = document.getElementById('content');
+                const cursorPos = textarea.selectionStart;
+                const textBefore = textarea.value.substring(0, cursorPos);
+                const textAfter = textarea.value.substring(cursorPos);
+                
+                const imgMarkdown = `![图片](${data.file.url})`;
+                textarea.value = textBefore + imgMarkdown + textAfter;
+                
+                // 触发更新预览
+                textarea.dispatchEvent(new Event('input'));
+                
+                // 更新光标位置
+                textarea.selectionStart = cursorPos + imgMarkdown.length;
+                textarea.selectionEnd = cursorPos + imgMarkdown.length;
+                textarea.focus();
+            } else {
+                alert('图片上传失败: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('上传错误:', error);
+            alert('图片上传出错，请重试');
+        });
+        
+        // 清空文件输入，允许再次选择同一文件
+        this.value = '';
+    });
+    
+    // 添加编辑器工具栏功能
+    document.getElementById('btn-h2').addEventListener('click', function() {
+        insertMarkdown('## ', '');
+    });
+    
+    document.getElementById('btn-bold').addEventListener('click', function() {
+        insertMarkdown('**', '**');
+    });
+    
+    document.getElementById('btn-italic').addEventListener('click', function() {
+        insertMarkdown('*', '*');
+    });
+    
+    document.getElementById('btn-list').addEventListener('click', function() {
+        insertMarkdown('- ', '');
+    });
+    
+    document.getElementById('btn-link').addEventListener('click', function() {
+        insertMarkdown('[链接文字](', ')');
+    });
+    
+    document.getElementById('btn-code').addEventListener('click', function() {
+        insertMarkdown('```\n', '\n```');
+    });
+    
+    function insertMarkdown(before, after) {
+        const textarea = document.getElementById('content');
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = textarea.value.substring(start, end);
+        const replacement = before + selectedText + after;
+        
+        textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+        
+        // 更新预览
+        textarea.dispatchEvent(new Event('input'));
+        
+        // 设置光标位置
+        if (selectedText.length > 0) {
+            textarea.selectionStart = start;
+            textarea.selectionEnd = start + replacement.length;
+        } else {
+            textarea.selectionStart = start + before.length;
+            textarea.selectionEnd = start + before.length;
+        }
+        
+        textarea.focus();
+    }
+});
+</script>
+{% endblock %}

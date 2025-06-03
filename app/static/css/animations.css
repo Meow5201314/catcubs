@@ -1,0 +1,146 @@
+/* 页面加载动画 */
+body {
+    opacity: 0;
+    transition: opacity 0.8s ease;
+}
+
+body.loaded {
+    opacity: 1;
+}
+
+/* 优化滚动条 */
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(241, 241, 241, 0.8);
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 6px;
+    border: 2px solid rgba(241, 241, 241, 0.8);
+    transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    border-width: 1px;
+}
+
+/* 增强的动画效果 */
+@keyframes glow {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(102, 126, 234, 0.8);
+        transform: scale(1.02);
+    }
+}
+
+.glow-effect {
+    animation: glow 3s ease-in-out infinite;
+    will-change: transform, box-shadow;
+}
+
+/* GPU加速的打字机效果 */
+.typewriter {
+    overflow: hidden;
+    border-right: 2px solid;
+    white-space: nowrap;
+    animation:
+        typing 3s steps(30, end),
+        blink 0.75s step-end infinite;
+    will-change: width, border-color;
+}
+
+@keyframes typing {
+    from { width: 0; }
+    to { width: 100%; }
+}
+
+@keyframes blink {
+    from, to { border-color: transparent; }
+    50% { border-color: currentColor; }
+}
+
+/* 页面过渡动画 */
+.page-transition {
+    animation: pageTransition 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes pageTransition {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+        filter: blur(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+/* 选择文本样式 */
+::selection {
+    background: rgba(102, 126, 234, 0.3);
+    color: #333;
+}
+
+::-moz-selection {
+    background: rgba(102, 126, 234, 0.3);
+    color: #333;
+}
+
+/* 增强的鼠标光标效果 */
+.cursor {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(102, 126, 234, 0.6);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transition: all 0.15s ease;
+    mix-blend-mode: difference;
+}
+
+.cursor.hover {
+    transform: scale(1.5);
+    border-color: rgba(102, 126, 234, 0.8);
+}
+
+/* 平滑滚动优化 */
+html {
+    scroll-behavior: smooth;
+}
+
+/* 焦点状态优化 */
+*:focus {
+    outline: 2px solid rgba(102, 126, 234, 0.6);
+    outline-offset: 2px;
+}
+
+/* 按钮和链接的通用悬停效果 */
+button, .btn, a[role="button"] {
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+button:hover, .btn:hover, a[role="button"]:hover {
+    transform: translateY(-2px);
+}
+
+/* 卡片通用悬停效果 */
+.card, .post-item, .comment-item {
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.card:hover, .post-item:hover, .comment-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}

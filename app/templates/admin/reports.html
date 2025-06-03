@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .admin-reports {
+        background-color: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+    }
+    
+    .admin-reports h2 {
+        color: var(--primary-color);
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid var(--primary-color);
+        font-size: 2.2rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .admin-reports h2 i {
+        margin-right: 15px;
+        color: var(--secondary-color);
+    }
+    
+    .reports-table {
+        width: 100%;
+        border-collapse: collapse;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        margin-bottom: 30px;
+    }
+    
+    .reports-table th, .reports-table td {
+        padding: 15px;
+        text-align: left;
+        vertical-align: middle;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .reports-table th {
+        background-color: var(--primary-color);
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+    }
+    
+    .reports-table tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .report-reason {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .report-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .btn {
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background-color: #218838;
+    }
+    
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background-color: #c82333;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+    
+    .no-reports {
+        text-align: center;
+        padding: 3rem;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        font-size: 1.2rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-reports">
+    <h2><i class="fas fa-flag"></i> 举报管理</h2>
+    
+    {% if reports %}
+    <table class="reports-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>举报人</th>
+                <th>举报类型</th>
+                <th>举报原因</th>
+                <th>举报时间</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for report in reports %}
+            <tr>
+                <td>{{ report.id }}</td>
+                <td>{{ report.reporter.username }}</td>
+                <td>
+                    {% if report.post_id %}
+                        <span class="badge badge-info">帖子</span>
+                    {% elif report.comment_id %}
+                        <span class="badge badge-warning">评论</span>
+                    {% endif %}
+                </td>
+                <td class="report-reason">{{ report.reason }}</td>
+                <td>{{ report.created_at|datetime }}</td>
+                <td>
+                    {% if report.status == 'pending' %}
+                        <span class="badge badge-warning">待处理</span>
+                    {% elif report.status == 'resolved' %}
+                        <span class="badge badge-success">已处理</span>
+                    {% else %}
+                        <span class="badge badge-secondary">已驳回</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if report.status == 'pending' %}
+                    <div class="report-actions">
+                        <!-- 接受举报表单 -->
+                        <form method="post" action="{{ url_for('admin.resolve_report', report_id=report.id) }}" style="display: inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <input type="hidden" name="action" value="accept"/>
+                            <button type="submit" class="btn btn-success" onclick="return confirm('确定要接受此举报并删除内容吗？')">
+                                <i class="fas fa-check"></i> 接受
+                            </button>
+                        </form>
+                        
+                        <!-- 驳回举报表单 -->
+                        <form method="post" action="{{ url_for('admin.resolve_report', report_id=report.id) }}" style="display: inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <input type="hidden" name="action" value="reject"/>
+                            <button type="submit" class="btn btn-secondary" onclick="return confirm('确定要驳回此举报吗？')">
+                                <i class="fas fa-times"></i> 驳回
+                            </button>
+                        </form>
+                        
+                        <!-- 查看详情按钮 -->
+                        {% if report.post_id %}
+                            <a href="{{ url_for('posts.view', post_id=report.post_id) }}" class="btn btn-primary" target="_blank">
+                                <i class="fas fa-eye"></i> 查看帖子
+                            </a>
+                        {% elif report.comment_id %}
+                            <a href="{{ url_for('posts.view', post_id=report.comment.post_id) }}#comment-{{ report.comment_id }}" class="btn btn-primary" target="_blank">
+                                <i class="fas fa-eye"></i> 查看评论
+                            </a>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                        <span class="text-muted">已处理</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- 分页 -->
+    {% if pagination.pages > 1 %}
+    <div class="pagination">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('admin.manage_reports', page=pagination.prev_num) }}">
+                <i class="fas fa-chevron-left"></i> 上一页
+            </a>
+        {% endif %}
+        
+        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                {% if page_num == pagination.page %}
+                    <span class="current-page">{{ page_num }}</span>
+                {% else %}
+                    <a href="{{ url_for('admin.manage_reports', page=page_num) }}">{{ page_num }}</a>
+                {% endif %}
+            {% else %}
+                <span class="ellipsis">...</span>
+            {% endif %}
+        {% endfor %}
+        
+        {% if pagination.has_next %}
+            <a href="{{ url_for('admin.manage_reports', page=pagination.next_num) }}">
+                下一页 <i class="fas fa-chevron-right"></i>
+            </a>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div class="no-reports">
+        <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem; display: block;"></i>
+        <p>暂无待处理的举报</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

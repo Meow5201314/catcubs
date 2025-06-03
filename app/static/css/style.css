@@ -1,0 +1,204 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
+:root {
+    --primary-color: #667eea;
+    --secondary-color: #764ba2;
+    --accent-color: #f093fb;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --light-color: #f8f9fa;
+    --dark-color: #333;
+    --border-color: #e9ecef;
+    --primary-color-rgb: 102, 126, 234;
+}
+
+/* === 动态背景 === */
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  color: var(--dark-color);
+  line-height: 1.6;
+  
+  /* 动态背景 */
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+  position: relative;
+}
+
+/* 添加动态背景动画 */
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* 添加粒子效果（可选，轻量级） */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.15), transparent),
+        radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.1), transparent),
+        radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.2), transparent);
+    background-repeat: repeat;
+    background-size: 200px 100px;
+    animation: particlesMove 25s linear infinite;
+    z-index: -1;
+    pointer-events: none;
+}
+
+@keyframes particlesMove {
+    0% { transform: translateY(0) translateX(0); }
+    50% { transform: translateY(-50px) translateX(25px); }
+    100% { transform: translateY(-100px) translateX(-25px); }
+}
+/* === 背景修改结束 === */
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+
+.btn, .button {
+  display: inline-block;
+  padding: 10px 18px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.btn:hover, .button:hover {
+  background-color: var(--accent-color);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+}
+
+.btn-secondary:hover {
+  background-color: #218a7e;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+.btn-sm {
+  padding: 6px 10px;
+  font-size: 14px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--dark-color);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  padding: 12px 15px;
+  font-size: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: var(--primary-color);
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(244, 162, 97, 0.25);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.post-item, .comment-item, .auth-form, .post-detail {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+
+@media (max-width: 768px) {
+  header .container {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  nav ul {
+    margin-top: 1rem;
+    justify-content: center;
+  }
+  
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .profile-avatar {
+    margin-right: 0;
+    margin-bottom: 1.5rem;
+  }
+  
+  .post-meta {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  /* 移动端优化动画性能 */
+  body::before {
+    animation-duration: 35s;
+  }
+  
+  body {
+    animation-duration: 20s;
+  }
+}
+
+@media (max-width: 576px) {
+  .post-actions {
+    position: static;
+    margin-top: 1rem;
+  }
+}
+
+/* 减少动效选项 */
+@media (prefers-reduced-motion: reduce) {
+  body,
+  body::before {
+    animation: none !important;
+  }
+  
+  body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+}

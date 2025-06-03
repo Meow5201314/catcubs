@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .logs-container {
+        background-color: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+    }
+    
+    .logs-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid var(--primary-color);
+    }
+    
+    .logs-header h2 {
+        margin: 0;
+        color: var(--primary-color);
+        font-size: 2.2rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .logs-header h2 i {
+        margin-right: 15px;
+        color: var(--secondary-color);
+    }
+    
+    .logs-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    
+    .logs-table th, .logs-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .logs-table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .logs-table tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .action-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .action-ban_user {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .action-unban_user {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .action-delete_post {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .action-delete_comment {
+        background-color: #cce5ff;
+        color: #004085;
+    }
+    
+    .action-set_admin {
+        background-color: #e2e3e5;
+        color: #383d41;
+    }
+    
+    .target-info {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .log-details {
+        font-size: 0.9rem;
+        color: #495057;
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .no-logs {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+    }
+    
+    .no-logs i {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        color: #dee2e6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="logs-container">
+    <div class="logs-header">
+        <h2><i class="fas fa-history"></i> 操作日志</h2>
+        <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> 返回管理面板
+        </a>
+    </div>
+    
+    {% if logs.items %}
+    <table class="logs-table">
+        <thead>
+            <tr>
+                <th>时间</th>
+                <th>管理员</th>
+                <th>操作</th>
+                <th>目标</th>
+                <th>详情</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs.items %}
+            <tr>
+                <td>{{ log.created_at|datetime }}</td>
+                <td>
+                    <a href="{{ url_for('main.profile', username=log.admin.username) }}">
+                        {{ log.admin.username }}
+                    </a>
+                </td>
+                <td>
+                    <span class="action-badge action-{{ log.action }}">
+                        {% if log.action == 'ban_user' %}
+                            <i class="fas fa-ban"></i> 封禁用户
+                        {% elif log.action == 'unban_user' %}
+                            <i class="fas fa-unlock"></i> 解封用户
+                        {% elif log.action == 'delete_post' %}
+                            <i class="fas fa-trash"></i> 删除帖子
+                        {% elif log.action == 'delete_comment' %}
+                            <i class="fas fa-comment-slash"></i> 删除评论
+                        {% elif log.action == 'set_admin' %}
+                            <i class="fas fa-user-shield"></i> 设置管理员
+                        {% elif log.action == 'create_announcement' %}
+                            <i class="fas fa-bullhorn"></i> 发布公告
+                        {% else %}
+                            {{ log.action }}
+                        {% endif %}
+                    </span>
+                </td>
+                <td>
+                    <span class="target-info">
+                        {% if log.target_type %}
+                            {{ log.target_type }} #{{ log.target_id }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </span>
+                </td>
+                <td>
+                    <div class="log-details" title="{{ log.details }}">
+                        {{ log.details or '-' }}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- 分页 -->
+    {% if logs.pages > 1 %}
+    <div class="pagination" style="margin-top: 30px;">
+        {% if logs.has_prev %}
+            <a href="{{ url_for('admin_actions.view_logs', page=logs.prev_num) }}" class="btn btn-sm btn-secondary">
+                <i class="fas fa-chevron-left"></i> 上一页
+            </a>
+        {% endif %}
+        
+        <span style="margin: 0 20px;">第 {{ logs.page }} / {{ logs.pages }} 页</span>
+        
+        {% if logs.has_next %}
+            <a href="{{ url_for('admin_actions.view_logs', page=logs.next_num) }}" class="btn btn-sm btn-secondary">
+                下一页 <i class="fas fa-chevron-right"></i>
+            </a>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div class="no-logs">
+        <i class="fas fa-clipboard-list"></i>
+        <h3>暂无操作记录</h3>
+        <p>管理员的操作将在这里显示</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
