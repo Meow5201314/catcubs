@@ -125,6 +125,8 @@ class Post(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     comments = db.relationship('Comment', backref='post', lazy='dynamic', cascade='all, delete-orphan')
     
+    reports = db.relationship('Report', backref='post', lazy='dynamic', cascade='all, delete-orphan')
+
     def __repr__(self):
         return f'<Post {self.title}>'
 
@@ -274,8 +276,6 @@ class Report(db.Model):
     created_at = db.Column(db.DateTime, default=get_beijing_time)
 
     reporter = db.relationship('User', foreign_keys=[reporter_id])
-    post = db.relationship('Post', foreign_keys=[post_id])
-    comment = db.relationship('Comment', foreign_keys=[comment_id])
 
 class Announcement(db.Model):
     __tablename__ = 'announcements'
