@@ -33,6 +33,7 @@ source venv/bin/activate  # Linux/Mac
 
 pip install -r requirements.txt
 
+```
 ### 2. 创建数据库
 
 ```mysql
@@ -41,7 +42,9 @@ CREATE USER 'catcubs_user'@'localhost' IDENTIFIED BY 'your_password';
 GRANT ALL PRIVILEGES ON catcubs.* TO 'catcubs_user'@'localhost';
 FLUSH PRIVILEGES;
 ```
+
 ### 3. 配置环境变量
+
 复制 `.env.example` 为 `.env` 并修改配置：
 ```base
 cp .env.example .env
