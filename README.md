@@ -143,6 +143,7 @@ source venv/bin/activate  # Linux/Mac
 # 或 venv\Scripts\activate  # Windows
 
 pip install -r requirements.txt
+```
 
 ### 2. 创建数据库
 
